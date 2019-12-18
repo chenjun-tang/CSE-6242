@@ -1,0 +1,2 @@
+We want to use such nonlinear scales because the difference of the greatest data and smallest data is too large. In this chart, the greatest data is
+over 1000 times of the smallest one. If we use linear scale, the smallest data can barely be seen.

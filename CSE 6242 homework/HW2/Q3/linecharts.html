@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="utf-8">
+    <title>Earthquakes</title>
+    <script type="text/javascript" src="../lib/d3.v5.min.js"></script>
+    <style type="text/css">
+      @media print{
+        .pagebreak{
+          clear: both;
+          page-break-after: always;
+        }
+      }
+    
+    </style>
+
+  </head>
+  <body>
+    <script type="text/javascript">
+
+    // set the dimensions and margins of the graph
+    var margin = {top: 40, right: 50, bot: 30, left: 50},
+        width = 1200 - margin.left - margin.right,
+        height = 700 - margin.top - margin.bot;
+
+    // append the svg object to the body of the page
+    var svg = d3.select("body")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bot)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");    
+
+    // Set the color scheme
+    var colors = {'5_5.9': '#FFC300', '6_6.9': '#FF5733', '7_7.9': '#C70039', '8.0+': '#900C3F'};
+    var magnitudes = Object.keys(colors);
+
+    //Read the data
+    d3.csv("earthquakes.csv").then(function(data){
+
+        var groupData = magnitudes.map( function(groupName) { 
+          return {
+            name: groupName,
+            values: data.map(function(d) {
+              return {year: d3.timeParse("%Y")(d.year), value: +d[groupName], weight: +d["Estimated Deaths"]};
+            })
+          }
+        });
+        console.log(groupData)
+
+
+        // Add X axis
+        var parseTime = d3.timeParse("%Y");
+        var x = d3.scaleTime()
+          .domain([parseTime("2000"), parseTime("2015")])
+          .range([ margin.left, width-margin.right ]);
+        svg.append("g")
+           .attr("class", "x axis")
+           .attr("transform", "translate(0," + (height - margin.bot) + ")")
+           .call(d3.axisBottom(x));
+
+        // Add Y axis
+        var y = d3.scaleLinear()
+          .domain( [0,2400])
+          .range([ height-margin.bot, margin.top]);
+        svg.append("g")
+           .attr("class", "y axis")
+           .attr("transform","translate("+margin.left+",0)")
+           .call(d3.axisLeft(y));
+
+        var r = d3.scaleLog()
+          .domain([50,300000])
+          .range([1,10]);
+
+        // Add the lines
+        var line = d3.line()
+          .x(function(d) { return x(+d.year) })
+          .y(function(d) { return y(+d.value) })
+          .curve(d3.curveMonotoneX)
+
+        svg.selectAll("myLines")
+          .data(groupData)
+          .enter()
+          .append("path")
+          .attr("d", function(d){ return line(d.values) } )
+          .attr("stroke", function(d){ return colors[d.name]})
+          .style("stroke-width", 4)
+          .style("fill", "none")
+
+        var size = 15
+        svg.selectAll("labels")
+            .data(groupData)
+            .enter()
+            .append("rect")
+            .attr("class","labels")
+            .attr("x", width - margin.right)
+            .attr("y", function(d,i){ return 100 + i*(size+5)})
+            .attr("width", size)
+            .attr("height", size)
+            .style("fill", function(d){ return colors[d.name]})
+
+          svg.selectAll("labels")
+            .data(groupData)
+            .enter()
+            .append("text")
+            .attr("class","labels")
+            .attr("x", width - margin.right + size*1.2)
+            .attr("y", function(d,i){ return 100 + i*(size+5) + size})
+            .attr("font-size","20px")
+            .text(function(d){ return d.name})
+            .attr("text-anchor", "left")
+            .style("alignment-baseline", "middle")
+
+          // Add the title
+          svg.append("text")
+             .attr("class", "title")
+             .attr("x", width/2)
+             .attr("y", 0)
+             .style("text-anchor","middle")
+             .attr("font-size", "24px")
+             .text("Worldwide Earthquake stats 2000-2015");
+
+          svg.append("text")
+             .attr("class", "x axis")
+             .attr("x", width/2)
+             .attr("y", height + margin.bot)
+             .style("text-anchor","middle")
+             .attr("font-size", "18px")
+             .text("Year");
+
+          svg.append("text")
+             .attr("class", "y axis")
+             .attr("x", -height/2 - margin.top)
+             .attr("y", 0)
+             .style("text-anchor","middle")
+             .attr("transform", "rotate(270)")
+             .attr("font-size", "18px")
+             .text("Num of Earthquakes");
+})
+    </script>
+    <div class="pagebreak"></div>
+        <script type="text/javascript">
+
+    // set the dimensions and margins of the graph
+    var margin = {top: 40, right: 50, bot: 30, left: 50},
+        width = 1200 - margin.left - margin.right,
+        height = 700 - margin.top - margin.bot;
+
+    // append the svg object to the body of the page
+    var svg1 = d3.select("body")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bot)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");    
+
+    // Set the color scheme
+    var colors = {'5_5.9': '#FFC300', '6_6.9': '#FF5733', '7_7.9': '#C70039', '8.0+': '#900C3F'};
+    var magnitudes = Object.keys(colors);
+
+    //Read the data
+    d3.csv("earthquakes.csv").then(function(data){
+
+        var groupData = magnitudes.map( function(groupName) { 
+          return {
+            name: groupName,
+            values: data.map(function(d) {
+              return {year: d3.timeParse("%Y")(d.year), value: +d[groupName], weight: +d["Estimated Deaths"]};
+            })
+          }
+        });
+        // console.log(groupData)
+
+        // Add X axis
+        var parseTime = d3.timeParse("%Y");
+        var x = d3.scaleTime()
+          .domain([parseTime("2000"), parseTime("2015")])
+          .range([ margin.left, width-margin.right ]);
+        svg1.append("g")
+           .attr("class", "x axis")
+           .attr("transform", "translate(0," + (height - margin.bot) + ")")
+           .call(d3.axisBottom(x));
+
+        // Add Y axis
+        var y = d3.scaleLinear()
+          .domain( [0,2400])
+          .range([ height-margin.bot, margin.top]);
+        svg1.append("g")
+           .attr("class", "y axis")
+           .attr("transform","translate("+margin.left+",0)")
+           .call(d3.axisLeft(y));
+
+        var r = d3.scaleLog()
+          .domain([50,300000])
+          .range([1,10]);
+
+        // Add the lines
+        var line = d3.line()
+          .x(function(d) { return x(+d.year) })
+          .y(function(d) { return y(+d.value) })
+          .curve(d3.curveMonotoneX)
+
+        svg1.selectAll("myLines")
+            .data(groupData)
+            .enter()
+            .append("path")
+            .attr("d", function(d){ return line(d.values) } )
+            .attr("stroke", function(d){ return colors[d.name]})
+            .style("stroke-width", 4)
+            .style("fill", "none")
+
+        // Add the points
+        svg1.selectAll("myDots")
+          .data(groupData)
+          .enter()
+            .append('g')
+            .style("fill", function(d){ return colors[d.name] })
+          .selectAll("myPoints")
+          .data(function(d){ return d.values })
+          .enter()
+          .append("circle")
+            .attr("cx", function(d) { return x(d.year) } )
+            .attr("cy", function(d) { return y(d.value) } )
+            .attr("r", function(d) { return r(d.weight) + 2} )
+            .attr("stroke", "white")
+
+        var size = 15
+        svg1.selectAll("labels")
+            .data(groupData)
+            .enter()
+            .append("rect")
+            .attr("class","labels")
+            .attr("x", width - margin.right)
+            .attr("y", function(d,i){ return 100 + i*(size+5)})
+            .attr("width", size)
+            .attr("height", size)
+            .style("fill", function(d){ return colors[d.name]})
+
+          svg1.selectAll("labels")
+            .data(groupData)
+            .enter()
+            .append("text")
+            .attr("class","labels")
+            .attr("x", width - margin.right + size*1.2)
+            .attr("y", function(d,i){ return 100 + i*(size+5) + size})
+            .attr("font-size","20px")
+            .text(function(d){ return d.name})
+            .attr("text-anchor", "left")
+            .style("alignment-baseline", "middle")
+
+          svg1.append("text")
+             .attr("class", "title")
+             .attr("x", width/2)
+             .attr("y", 0)
+             .style("text-anchor","middle")
+             .attr("font-size", "24px")
+             .text("Worldwide Earthquake stats 2000-2015 with symbols");
+
+          svg1.append("text")
+             .attr("class", "x axis")
+             .attr("x", width/2)
+             .attr("y", height + margin.bot)
+             .style("text-anchor","middle")
+             .attr("font-size", "18px")
+             .text("Year");
+
+          svg1.append("text")
+             .attr("class", "y axis")
+             .attr("x", -height/2 - margin.top)
+             .attr("y", 0)
+             .style("text-anchor","middle")
+             .attr("transform", "rotate(270)")
+             .attr("font-size", "18px")
+             .text("Num of Earthquakes");
+})
+    </script>
+    <div class="pagebreak"></div>
+        <script type="text/javascript">
+
+    // set the dimensions and margins of the graph
+    var margin = {top: 40, right: 50, bot: 30, left: 50},
+        width = 1200 - margin.left - margin.right,
+        height = 700 - margin.top - margin.bot;
+
+    // append the svg object to the body of the page
+    var svg2 = d3.select("body")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bot)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");    
+
+    // Set the color scheme
+    var colors = {'5_5.9': '#FFC300', '6_6.9': '#FF5733', '7_7.9': '#C70039', '8.0+': '#900C3F'};
+    var magnitudes = Object.keys(colors);
+
+    //Read the data
+    d3.csv("earthquakes.csv").then(function(data){
+
+        var groupData = magnitudes.map( function(groupName) { 
+          return {
+            name: groupName,
+            values: data.map(function(d) {
+              return {year: d3.timeParse("%Y")(d.year), value: +d[groupName], weight: +d["Estimated Deaths"]};
+            })
+          }
+        });
+        console.log(groupData)
+
+
+        // Add X axis
+        var parseTime = d3.timeParse("%Y");
+        var x = d3.scaleTime()        
+          .domain([parseTime("2000"),parseTime("2015")])
+          .range([ margin.left, width- margin.right]);
+        svg2.append("g")
+           .attr("class", "x axis")
+           .attr("transform", "translate(0," + (height-margin.bot) + ")")
+           .call(d3.axisBottom(x));
+
+        // Add Y axis
+        var y = d3.scaleSqrt()
+          .domain( [0,2400])
+          .range([ height-margin.bot, margin.top]);
+        svg2.append("g")
+           .attr("class", "y axis")
+           .attr("transform","translate("+margin.left+",0)")
+           .call(d3.axisLeft(y));
+
+        var r = d3.scaleLog()
+          .domain([50,300000])
+          .range([1,10]);
+
+        // Add the lines
+        var line = d3.line()
+          .x(function(d) { return x(+d.year) })
+          .y(function(d) { return y(+d.value) })
+          .curve(d3.curveMonotoneX)
+
+        svg2.selectAll("myLines")
+            .data(groupData)
+            .enter()
+            .append("path")
+            .attr("d", function(d){ return line(d.values) } )
+            .attr("stroke", function(d){ return colors[d.name]})
+            .style("stroke-width", 4)
+            .style("fill", "none")
+
+        // Add the points
+        svg2.selectAll("myDots")
+          .data(groupData)
+          .enter()
+            .append('g')
+            .style("fill", function(d){ return colors[d.name] })
+          .selectAll("myPoints")
+          .data(function(d){ return d.values })
+          .enter()
+          .append("circle")
+            .attr("cx", function(d) { return x(d.year) } )
+            .attr("cy", function(d) { return y(d.value) } )
+            .attr("r", function(d) { return r(d.weight) + 2} )
+            .attr("stroke", "white")
+
+        var size = 15
+        svg2.selectAll("labels")
+            .data(groupData)
+            .enter()
+            .append("rect")
+            .attr("class","labels")
+            .attr("x", width - margin.right)
+            .attr("y", function(d,i){ return 60 + i*(size+5)})
+            .attr("width", size)
+            .attr("height", size)
+            .style("fill", function(d){ return colors[d.name]})
+
+          svg2.selectAll("labels")
+            .data(groupData)
+            .enter()
+            .append("text")
+            .attr("class","labels")
+            .attr("x", width - margin.right + size*1.2)
+            .attr("y", function(d,i){ return 60 + i*(size+5) + size})
+            .attr("font-size","20px")
+            .text(function(d){ return d.name})
+            .attr("text-anchor", "left")
+            .style("alignment-baseline", "middle")
+
+          svg2.append("text")
+             .attr("class", "title")
+             .attr("x", width/2)
+             .attr("y", 0)
+             .style("text-anchor","middle")
+             .attr("font-size", "24px")
+             .text("Worldwide Earthquake stats 2000-2015 square root scale");
+
+          svg2.append("text")
+             .attr("class", "x axis")
+             .attr("x", width/2)
+             .attr("y", height + margin.bot)
+             .style("text-anchor","middle")
+             .attr("font-size", "18px")
+             .text("Year");
+
+          svg2.append("text")
+             .attr("class", "y axis")
+             .attr("x", -height/2 - margin.top)
+             .attr("y", 0)
+             .style("text-anchor","middle")
+             .attr("transform", "rotate(270)")
+             .attr("font-size", "18px")
+             .text("Num of Earthquakes");
+})
+    </script>
+    <div class="pagebreak"></div>
+    <script type="text/javascript">
+
+    // set the dimensions and margins of the graph
+    var margin = {top: 40, right: 50, bot: 30, left: 50},
+        width = 1200 - margin.left - margin.right,
+        height = 700 - margin.top - margin.bot;
+
+    // append the svg object to the body of the page
+    var svg3 = d3.select("body")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bot)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");    
+
+    // Set the color scheme
+    var colors = {'5_5.9': '#FFC300', '6_6.9': '#FF5733', '7_7.9': '#C70039', '8.0+': '#900C3F'};
+    var magnitudes = Object.keys(colors);
+
+    //Read the data
+    d3.csv("earthquakes.csv").then(function(data){
+
+        var groupData = magnitudes.map( function(groupName) { 
+          return {
+            name: groupName,
+            values: data.map(function(d) {
+              if (d[groupName]==0){
+                  return{year: d3.timeParse("%Y")(d.year), value: +d[groupName]+1, weight: +d["Estimated Deaths"]};
+              }
+              else{
+                  return {year: d3.timeParse("%Y")(d.year), value: +d[groupName], weight: +d["Estimated Deaths"]};
+              }
+              
+            })
+          }
+        });
+        console.log(groupData)
+
+
+        // Add X axis
+        var parseTime = d3.timeParse("%Y");
+        var x = d3.scaleTime()
+          .domain([parseTime("2000"),parseTime("2015")])
+          .range([margin.left, width - margin.right]);
+        svg3.append("g")
+           .attr("class", "x axis")
+           .attr("transform", "translate(0," + (height - margin.bot) + ")")
+           .call(d3.axisBottom(x));
+
+        // Add Y axis
+        var y = d3.scaleLog()
+          .domain( [1,2400])
+          .range([ height-margin.bot, margin.top]);
+        svg3.append("g")
+           .attr("class", "y axis")
+           .attr("transform","translate("+margin.left+",0)")
+           .call(d3.axisLeft(y));
+
+        var r = d3.scaleLog()
+          .domain([50,300000])
+          .range([1,10]);
+
+        // Add the lines
+        var line = d3.line()
+          .x(function(d) { return x(+d.year) })
+          .y(function(d) { return y(+d.value) })
+          .curve(d3.curveMonotoneX)
+
+        svg3.selectAll("myLines")
+            .data(groupData)
+            .enter()
+            .append("path")
+            .attr("d", function(d){ return line(d.values) } )
+            .attr("stroke", function(d){ return colors[d.name]})
+            .style("stroke-width", 4)
+            .style("fill", "none")
+
+        // Add the points
+        svg3.selectAll("myDots")
+          .data(groupData)
+          .enter()
+            .append('g')
+            .style("fill", function(d){ return colors[d.name] })
+          .selectAll("myPoints")
+          .data(function(d){ return d.values })
+          .enter()
+          .append("circle")
+            .attr("cx", function(d) { return x(d.year) } )
+            .attr("cy", function(d) { return y(d.value) } )
+            .attr("r", function(d) { return r(d.weight) + 2} )
+            .attr("stroke", "white")
+
+        var size = 15
+        svg3.selectAll("labels")
+            .data(groupData)
+            .enter()
+            .append("rect")
+            .attr("class","labels")
+            .attr("x", width - margin.right)
+            .attr("y", function(d,i){ return 100 + i*(size+5)})
+            .attr("width", size)
+            .attr("height", size)
+            .style("fill", function(d){ return colors[d.name]})
+
+          svg3.selectAll("labels")
+            .data(groupData)
+            .enter()
+            .append("text")
+            .attr("class","labels")
+            .attr("x", width - margin.right + size*1.2)
+            .attr("y", function(d,i){ return 100 + i*(size+5) + size})
+            .attr("font-size","20px")
+            .text(function(d){ return d.name})
+            .attr("text-anchor", "left")
+            .style("alignment-baseline", "middle")
+
+          svg3.append("text")
+             .attr("class", "title")
+             .attr("x", width/2)
+             .attr("y", 0)
+             .style("text-anchor","middle")
+             .attr("font-size", "24px")
+             .text("Worldwide Earthquake stats 2000-2015 log scale");
+
+          svg3.append("text")
+             .attr("class", "x axis")
+             .attr("x", width/2)
+             .attr("y", height + margin.bot)
+             .style("text-anchor","middle")
+             .attr("font-size", "18px")
+             .text("Year");
+
+          svg3.append("text")
+             .attr("class", "y axis")
+             .attr("x", -height/2 - margin.top)
+             .attr("y", 0)
+             .style("text-anchor","middle")
+             .attr("transform", "rotate(270)")
+             .attr("font-size", "18px")
+             .text("Num of Earthquakes");
+})
+    </script>
+
+  
+</body>
+</html>

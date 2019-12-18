@@ -1,0 +1,26 @@
+1.Ease to develop for developers [40 words]
+	Tableau: Best. You can create the graph just by clicking and dragging.
+	Excel: Medium. You can adjust the data structure can use the templates. 
+	D3: Worst. Need strong background knowledge. Can be time-consuming.
+
+2.Ease to maintain the visualization for developers (e.g., difficulty of the maintenance of the product 
+as the requirements change, the data changes, the hosting platform changes, etc.) [40 words]
+	Tableau: Good. New versions support old ones.
+	Excel: Best. Everyone has excel. New versions support old ones.
+	D3: Worst. The syntax changes in new versions.
+
+3.Usability of visualization developed for end users [40 words]
+	Tableau: Medium. You can enjoy the picture.
+	Excel: Worst. The pictures are usually simple, sometimes ugly.
+	D3: Best. Support good interactivity with users.
+
+4.Scalability of visualization to “large” datasets [40 words]
+	Tableau: Best. Handles large dataset well.
+	Excel: Worst. Can be slow and take a lot of space.
+	D3: Medium. Consume a lot of RAM.
+
+5.System requirements to run the visualization (e.g., browsers, OS, software licensing) for end users [40 words]
+	Tableau: Medium. License is needed.
+	Excel: Best. Everyone has excel.
+	D3: Worst. You need a local server or do some mysterious adjustment to your brower.
+	

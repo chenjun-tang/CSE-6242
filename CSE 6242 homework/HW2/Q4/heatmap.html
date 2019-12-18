@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Heatmap</title>
+        <script type="text/javascript" src="../lib/d3.v5.min.js"></script>
+    </head>
+    <body>
+        <script type="text/javascript">
+            // Your beautiful D3 code will go here
+            // set the dimensions and margins of the graph
+            var margin = {top: 70, right: 70, bottom: 120, left: 80},
+                width = 1200 - margin.left - margin.right,
+                height = 500 - margin.top - margin.bottom;
+
+            // append the svg object to the body of the page
+            var svg = d3.select("body")
+                        .append("svg")
+                        .attr("width", width + margin.left + margin.right)
+                        .attr("height", height + margin.top + margin.bottom)
+                        .append("g")
+                        .attr("transform","translate(" + margin.left + "," + margin.top + ")");
+            
+            var years =  ["2010", "2011", "2012", "2013", "2014", "2015"],
+                dataReady = [];
+
+
+            d3.csv("earthquakes.csv",function(data){
+              //reconstruct the data structure
+                years.map(function(groupName){
+                    dataReady.push({states:data.States,
+                                    year:groupName,
+                                    value:data[groupName],
+                                    category:data.Category})                                      
+                });                
+            }).then(function(data){
+                //get all the states and categories 
+                var states = d3.map(dataReady, function(d){return d.states;}).keys();
+                var categories = d3.map(dataReady, function(d){return d.category;}).keys();
+                categories.sort();
+                var dataFilter  = dataReady.filter(function(d){return d.category == categories[0];}),
+                      statesFilter = d3.map(dataFilter, function(d){return d.states}).keys(),
+                      rangeFilter = d3.extent(dataFilter,function(d){return +d.value}),
+                      colors = ['#ffffd9','#edf8b1','#c7e9b4','#7fcdbb','#41b6c4','#1d91c0','#225ea8','#253494','#081d58']
+
+                //add select
+                var select = d3.select('body')
+                               .append('select') 
+                               .attr('class','select')
+                               .on('change',update)
+                               .style("left","500px")
+                               .style("top","50px")
+                               .style('position','absolute');    
+
+                var options = select.selectAll('option')
+                                    .data(categories)
+                                    .enter()
+                                    .append('option')
+                                    .text(d=>d);
+
+                var x = d3.scaleBand()
+                    .range([ 0, width ])
+                    .domain(statesFilter)
+                    .padding(0.01);
+                svg.append("g")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(d3.axisBottom(x))
+                    .selectAll("text")
+                    .attr("y", 0)
+                    .attr("x", 9)
+                    .attr("dy", ".35em")
+                    //rotate the labels
+                    .attr("transform", "rotate(30)")
+                    .style("text-anchor", "start");
+
+                  // Build X scales and axis:
+                  var y = d3.scaleBand()
+                    .range([0, height ])
+                    .domain(years)
+                    .padding(0.01);
+                  svg.append("g")
+                    .call(d3.axisLeft(y));
+
+                  // Build color scale
+                  var myColor = d3.scaleQuantile()
+                    .domain(rangeFilter)
+                    .range(colors)
+
+                  svg.selectAll()
+                    .data(dataReady.filter(function(d){return d.category==categories[0]}))
+                    .enter()
+                    .append("rect")
+                    .attr("class", "rect")
+                    .attr("x", function(d) { return x(d.states)})
+                    .attr("y", function(d) { return y(d.year)})
+                    .attr("rx", 5)
+                    .attr("ry", 5)
+                    .attr("width", x.bandwidth() )
+                    .attr("height", y.bandwidth() )
+                    .style("fill", function(d) { return myColor(d.value)} )
+                    .style("stroke-width", 4)
+                    .style("stroke", "none")
+                    .on("mouseover",mouseover)
+                    .on("mouseleave",mouseleave)
+
+                // Add title to graph
+                svg.append("text")
+                  .attr("x", width/2)
+                  .attr("y", -50)
+                  .attr("text-anchor", "middle")
+                  .style("font-size", "22px")
+                  .text("Visualizing Earthquake Counts by State 2010-2015 (M3+)");
+
+                svg.append("text")
+                  .attr("x", 370)
+                  .attr("y", -12)
+                  .attr("text-anchor", "middle")
+                  .style("font-size", "18px")
+                  .text("Range of");
+
+                // Add the legend
+                  var min_value = d3.min(rangeFilter),
+                      max_value = d3.max(rangeFilter),
+                      step = (max_value - min_value)/8,
+                      legends = []
+                  for (var i = 0 ; i <= colors.length - 1; i++) {
+                      legends.push(Math.round(min_value  + i*step))
+                  }
+
+                var cellSize=50;
+                var legend = svg.selectAll("legend")
+                                .data(colors)
+                                .enter()
+                                .append("g")
+                                .attr("class", "legend");
+
+                legend.append("rect")
+                    .attr("class", "legend")
+                    .attr("x", function(d, i) { return margin.left+cellSize * i; })
+                    .attr("y", height+60)
+                    .attr("width", cellSize)
+                    .attr("height", cellSize/2)
+                    .attr("fill", function(d, i) { return colors[i]; });
+
+                legend.append("text")
+                  .attr("class", "legend")
+                  .text((d,i)=>legends[i]+"")
+                  .attr("x", function(d, i) { return margin.left+cellSize * i+cellSize/2; })
+                  .attr("y", height+110).attr("font-size", "18px")
+                  .style("text-anchor","middle");
+
+                svg.append("text")
+                    .attr("class", "caption")
+                    .attr("x", margin.left)
+                    .attr("y", height+50)
+                    .attr("fill", "#000")
+                    .text("Count").attr("font-size", "18px");
+
+                function mouseover(d){
+                        svg.append("text")
+                           .attr("id","l"+d.year+"-"+d.value+"")
+                           .attr("x",width/2+200)
+                           .attr("y",-12)
+                           .text(d.states+"  "+d.year+":"+d.value);
+                    }
+
+                function mouseleave(d){
+                        var id = "l"+d.year+"-"+d.value+"";
+                        d3.selectAll("#"+id).remove()
+                    }   
+
+                function update(){
+
+                  d3.select("svg").remove();
+                  var svg = d3.select("body")
+                      .append("svg")
+                      .attr("width", width + margin.left + margin.right)
+                      .attr("height", height + margin.top + margin.bottom)
+                      .append("g")
+                      .attr("transform","translate(" + margin.left + "," + margin.top + ")");
+
+                  //get informations about selected data
+                  var selectValue = d3.select('select').property('value'),
+                      dataFilter = dataReady.filter(function(d){return d.category == selectValue;}),
+                      statesFilter = d3.map(dataFilter, function(d){return d.states}).keys(),
+                      rangeFilter = d3.extent(dataFilter,function(d){return +d.value}),
+                      colors = ['#ffffd9','#edf8b1','#c7e9b4','#7fcdbb','#41b6c4','#1d91c0','#225ea8','#253494','#081d58']
+
+                  // Build X scales and axis:
+                  var x = d3.scaleBand()
+                    .range([ 0, width ])
+                    .domain(statesFilter)
+                    .padding(0.01);
+                  svg.append("g")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(d3.axisBottom(x))
+                    .selectAll("text")
+                    .attr("y", 0)
+                    .attr("x", 9)
+                    .attr("dy", ".35em")
+                    //rotate the labels
+                    .attr("transform", "rotate(30)")
+                    .style("text-anchor", "start");
+
+                  // Build X scales and axis:
+                  var y = d3.scaleBand()
+                    .range([0, height ])
+                    .domain(years)
+                    .padding(0.01);
+                  svg.append("g")
+                    .call(d3.axisLeft(y));
+
+                  // Build color scale
+                  var myColor = d3.scaleQuantile()
+                    .domain(rangeFilter)
+                    .range(colors)
+
+                  svg.selectAll()
+                    .data(dataReady.filter(function(d){return d.category==selectValue}))
+                    .enter()
+                    .append("rect")
+                    .attr("class", "rect")
+                    .attr("x", function(d) { return x(d.states)})
+                    .attr("y", function(d) { return y(d.year)})
+                    .attr("rx", 5)
+                    .attr("ry", 5)
+                    .attr("width", x.bandwidth() )
+                    .attr("height", y.bandwidth() )
+                    .style("fill", function(d) { return myColor(d.value)} )
+                    .style("stroke-width", 4)
+                    .style("stroke", "none")
+                    .on("mouseover", mouseover)
+                    .on("mouseleave", mouseleave)
+
+                  // Add title to graph
+                  svg.append("text")
+                    .attr("x", width/2)
+                    .attr("y", -50)
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "22px")
+                    .text("Visualizing Earthquake Counts by State 2010-2015 (M3+)");
+
+                  svg.append("text")
+                    .attr("x", 370)
+                    .attr("y", -12)
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "18px")
+                    .text("Range of");
+
+                  function mouseover(d){
+                      svg.append("text")
+                         .attr("id","l"+d.year+"-"+d.value+"")
+                         .attr("x",width/2+200)
+                         .attr("y",-12)
+                         .text(d.states+"  "+d.year+":"+d.value);
+                  }
+
+                  function mouseleave(d){
+                      var id = "l"+d.year+"-"+d.value+"";
+                      d3.selectAll("#"+id).remove()
+                  }   
+
+                  //add legend
+                  var min_value = d3.min(rangeFilter),
+                      max_value = d3.max(rangeFilter),
+                      step = (max_value - min_value)/8,
+                      legends = []
+                  for (var i = 0 ; i <= colors.length - 1; i++) {
+                      legends.push(Math.round(min_value  + i*step))
+                  }
+
+                  // Add the legend
+                  var cellSize=50;
+                  var legend = svg.selectAll("legend")
+                                  .data(colors)
+                                  .enter()
+                                  .append("g")
+                                  .attr("class", "legend");
+
+                  legend.append("rect")
+                      .attr("class", "legend")
+                      .attr("x", function(d, i) { return margin.left+cellSize * i; })
+                      .attr("y", height+60)
+                      .attr("width", cellSize)
+                      .attr("height", cellSize/2)
+                      .attr("fill", function(d, i) { return colors[i]; });
+
+                  legend.append("text")
+                    .attr("class", "legend")
+                    .text((d,i)=>legends[i]+"")
+                    .attr("x", function(d, i) { return margin.left+cellSize * i+cellSize/2; })
+                    .attr("y", height+110).attr("font-size", "18px")
+                    .style("text-anchor","middle");
+
+                  svg.append("text")
+                      .attr("class", "caption")
+                      .attr("x", margin.left)
+                      .attr("y", height+50)
+                      .attr("fill", "#000")
+                      .text("Count").attr("font-size", "18px");
+
+              }
+
+        });
+        </script>
+    </body>
+</html>

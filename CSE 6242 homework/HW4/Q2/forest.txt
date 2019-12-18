@@ -1,0 +1,8 @@
+1.What is the main reason to use a random forest versus a decision tree? (<= 50 words)
+Random forest use random sample to build mutiple decision trees, thus avoiding overfitting. Also, the influence of outliers will be smaller in random forest than in decision tree.
+
+2.How long did your random forest take to run? (in seconds)
+66.2878s.
+
+3.What accuracy (to two decimal places, xx.xx%) were you able to obtain?
+Accuracy: 97.48%, OOB estimate: 2.52%.

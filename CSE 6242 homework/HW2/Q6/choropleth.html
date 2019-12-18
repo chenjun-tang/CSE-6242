@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+		<meta charset="utf-8">
+		<title>choropleth</title>
+		<script type="text/javascript" src="../lib/d3.v5.min.js"></script>
+        <script type="text/javascript" src="../lib/topojson.v2.min.js"></script>
+        <script type="text/javascript" src="../lib/d3-scale-chromatic.v1.min.js"></script>
+        <script type="text/javascript" src="../lib/d3-tip.min.js"></script>
+        <div id="mouse"></div>
+        <svg  width="1200" height="1200"></svg>
+		<style type="text/css">
+
+		
+		</style>
+
+	</head>
+	<body>
+		<script type="text/javascript">
+
+
+	    var svg = d3.select("svg"),
+	        width = +svg.attr("width"),
+	        height = +svg.attr("height");
+
+	    var region=d3.map(),
+	        earthquake = d3.map(),
+	    	legend=["1", "5", "10", "100", "500", "1000","2000","5000","10000"];
+
+	    var path = d3.geoPath();
+	    var projection = d3.geoAlbersUsa()
+	                       .scale(900)
+	                       .translate([width / 2, 300]);
+
+	    var log = d3.scaleLog()
+	                .domain(legend.map(function(d){return parseInt(d);}))
+	                .range(d3.range(1, 9))
+
+      // console.log(legend.map(function(d){return parseInt(d);}))
+      // console.log(log.range)
+
+	    var color = d3.scaleThreshold()
+	                  .domain(d3.range(1, 9))
+	                  .range(d3.schemeReds[legend.length]);
+
+
+	    var promises = [
+	        d3.json("states-10m.json"),
+	        d3.csv("state-earthquakes.csv", function(d){
+	            earthquake.set(d.States,+d['Total Earthquakes']);
+	            region.set(d.States, d.Region);
+	        })
+	      ];
+
+	    Promise.all(promises).then(ready)
+
+	    function ready([us]) {
+	        svg.append("g")
+	           .attr("class", "states")
+	           .selectAll("path")
+	           .data(topojson.feature(us, us.objects.states).features)
+	           .enter()
+	           .append("path")
+	           .attr("fill", function(d) { return color(d.rate = log(earthquake.get(d.properties.name))); })
+	           .attr("stroke","black")
+	           .attr("stroke-width","1px")
+	           .attr("d", path.projection(projection))
+	           .on('mouseover', mouseover)
+	           .on('mousemove', mousemove)
+	           .on('mouseout', mouseout)
+	           .append("title")
+	           .text(function(d) { return d['Total Earthquakes']; });
+
+	        svg.append("path")
+	            .datum(topojson.mesh(us, us.objects.nation, function(x, y) { return x !== y }))
+	            .attr("class", "nation")
+	            .attr("d", path);
+	        }
+
+	    //add tooltip
+        var tooltip = d3.select("#mouse")
+			.append("div")
+			.style("opacity", 0)
+			.attr("class", "tooltip")              
+			.style("width","150px")
+			.style("height","80px")
+			.style("position","absolute")
+			.style("color","#fff")
+			.style("background-color", "black")
+			.style("padding", "8px")
+			.style("border-radius", "5px")
+
+        //add legend
+        var size = 18
+        svg.selectAll("dots")
+           .data(legend)
+           .enter()
+           .append("rect")
+           .attr("x", 1000)
+           .attr("y", function(d,i){ return 100 + i*(size+5)}) 
+           .attr("width", size)
+           .attr("height", size)
+           .style("fill", function(d){ return color(log(parseInt(d)))})
+
+        // Add one dot in the legend for each name.
+        svg.selectAll("labels")
+          .data(legend)
+          .enter()
+          .append("text")
+            .attr("x", 1000 + size*1.2)
+            .attr("y", function(d,i){ return 100 + i*(size+5) + 15}) 
+            .style("fill", "black")
+            .text(function(d){ return d})
+            .attr("text-anchor", "left")
+            .style("alignment-baseline", "middle")
+
+        svg.append("text")    
+            .attr("class", "caption")
+            .attr("x", 1000)
+            .attr("y", 90)
+            .attr("fill", "#000")
+            .attr("text-anchor", "start")
+            .attr("font-weight", "bold")
+            .text("Earthquake Frequency");
+
+        var mouseover = function(d) {
+          tooltip.style("opacity", 0.7)
+          d3.select(this).style("stroke","white")
+        }
+
+      	var mousemove = function(d) {
+
+          tooltip.html("State:"+d.properties.name+""+"<br>"+"Region:" +region.get(d.properties.name)+""+ "<br>" + "Earthquakes:"+earthquake.get(d.properties.name)+"" )
+            .style("font-size", "18px")
+            .style("left", (d3.mouse(this)[0]+70) + "px")
+            .style("top", (d3.mouse(this)[1]) + "px")
+        }
+
+        var mouseout = function(d) {
+          console.log("mouseout")
+          tooltip.style("opacity", 0)
+          d3.select(this).style("stroke","black")
+        }
+
+
+		</script>
+	
+</body>
+</html>
